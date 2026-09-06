@@ -1,0 +1,23 @@
+# NOTE: when a .pubignore exists it fully replaces .gitignore for publishing,
+# so the usual build artifacts must be re-listed here.
+build/
+.dart_tool/
+.idea/
+*.iml
+
+# Keep the published archive small: the example only needs its source and
+# pubspec to render on pub.dev — platform runners and build output are not.
+example/android/
+example/ios/
+example/linux/
+example/macos/
+example/windows/
+example/web/
+example/build/
+example/.dart_tool/
+example/pubspec.lock
+example/.metadata
+example/analysis_options.yaml
+example/.gitignore
+example/README.md
+example/test/
