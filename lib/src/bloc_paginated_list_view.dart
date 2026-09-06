@@ -1,6 +1,7 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'default_bottom_loader.dart';
+import 'typedefs.dart';
 
 /// A reusable paginated [ListView] driven by a BLoC/Cubit.
 ///
@@ -44,42 +45,41 @@ class BlocPaginatedListView<T, B extends StateStreamable<S>, S>
 
   /// Called whenever a page of data should be fetched.
   ///
-  /// Invoked with the 1-based [page] number and the configured [pageSize] as
+  /// Invoked with the 1-based page number and the configured [pageSize] as
   /// `limit`. Trigger your BLoC's fetch method here.
-  final void Function(int page, int limit) onFetchData;
+  final PaginatedFetchCallback onFetchData;
 
-  /// Returns `true` when [state] represents a loading state.
-  final bool Function(S state) isLoadingState;
+  /// Returns `true` when the state represents a loading state.
+  final StatePredicate<S> isLoadingState;
 
-  /// Returns `true` when [state] represents a successful data state.
-  final bool Function(S state) isSuccessState;
+  /// Returns `true` when the state represents a successful data state.
+  final StatePredicate<S> isSuccessState;
 
-  /// Returns `true` when [state] represents an error state.
-  final bool Function(S state) isErrorState;
+  /// Returns `true` when the state represents an error state.
+  final StatePredicate<S> isErrorState;
 
-  /// Extracts the list of items from a success [state].
-  final List<T> Function(S state) extractData;
+  /// Extracts the list of items from a success state.
+  final PaginatedDataExtractor<T, S> extractData;
 
-  /// Extracts a human-readable error message from an error [state].
-  final String Function(S state) extractErrorMessage;
+  /// Extracts a human-readable error message from an error state.
+  final PaginatedErrorExtractor<S> extractErrorMessage;
 
   /// Builds a single item in the list.
-  final Widget Function(BuildContext context, T item, int index) itemBuilder;
+  final PaginatedItemBuilder<T> itemBuilder;
 
   /// Builds a single placeholder/skeleton item shown during the initial load.
-  final Widget Function(BuildContext context, int index) loadingItemBuilder;
+  final PaginatedIndexedBuilder loadingItemBuilder;
 
   /// Builds the widget shown when the list is empty.
-  final Widget Function(BuildContext context) emptyBuilder;
+  final PaginatedWidgetBuilder emptyBuilder;
 
   /// Builds the widget shown when the first page fails to load.
   ///
   /// The provided `retry` callback re-fetches the current page.
-  final Widget Function(BuildContext context, String error, VoidCallback retry)
-      errorBuilder;
+  final PaginatedErrorBuilder errorBuilder;
 
   /// Optional header that scrolls together with the list (always at index 0).
-  final Widget Function(BuildContext context)? headerBuilder;
+  final PaginatedWidgetBuilder? headerBuilder;
 
   /// Number of items requested per page. Also used to decide whether more pages
   /// are available (a page smaller than [pageSize] is treated as the last one).
@@ -93,14 +93,14 @@ class BlocPaginatedListView<T, B extends StateStreamable<S>, S>
   final EdgeInsetsGeometry? padding;
 
   /// Optional separator builder. When provided a [ListView.separated] is used.
-  final Widget Function(BuildContext context, int index)? separatorBuilder;
+  final PaginatedIndexedBuilder? separatorBuilder;
 
   /// Whether to show a loading indicator at the bottom while fetching the next
   /// page.
   final bool showBottomLoader;
 
   /// Custom widget for the bottom "loading more" indicator. Falls back to a
-  /// platform-appropriate spinner tinted with [progressIndicatorColor].
+  /// [DefaultBottomLoader] tinted with [progressIndicatorColor].
   final Widget? bottomLoaderWidget;
 
   /// Whether pull-to-refresh is enabled.
@@ -229,40 +229,7 @@ class _BlocPaginatedListViewState<T, B extends StateStreamable<S>, S>
   Widget build(BuildContext context) {
     return BlocConsumer<B, S>(
       bloc: widget.bloc,
-      listener: (context, state) {
-        if (widget.isLoadingState(state)) {
-          setState(() {
-            if (currentPage == 1) {
-              isLoading = true;
-              items.clear();
-              errorMessage = null;
-            } else {
-              isLoadingMore = true;
-            }
-          });
-        } else if (widget.isSuccessState(state)) {
-          final newData = widget.extractData(state);
-          setState(() {
-            if (currentPage == 1) {
-              // Refresh or initial load.
-              items = newData;
-            } else {
-              // Pagination — append to existing items.
-              items.addAll(newData);
-            }
-            hasNextPage = newData.length >= widget.pageSize;
-            isLoading = false;
-            isLoadingMore = false;
-            errorMessage = null;
-          });
-        } else if (widget.isErrorState(state)) {
-          setState(() {
-            errorMessage = widget.extractErrorMessage(state);
-            isLoading = false;
-            isLoadingMore = false;
-          });
-        }
-      },
+      listener: _handleStateChange,
       builder: (context, state) {
         // Error state (only when there is nothing to show).
         if (errorMessage != null && items.isEmpty) {
@@ -289,6 +256,41 @@ class _BlocPaginatedListViewState<T, B extends StateStreamable<S>, S>
             : _buildList();
       },
     );
+  }
+
+  void _handleStateChange(BuildContext context, S state) {
+    if (widget.isLoadingState(state)) {
+      setState(() {
+        if (currentPage == 1) {
+          isLoading = true;
+          items.clear();
+          errorMessage = null;
+        } else {
+          isLoadingMore = true;
+        }
+      });
+    } else if (widget.isSuccessState(state)) {
+      final newData = widget.extractData(state);
+      setState(() {
+        if (currentPage == 1) {
+          // Refresh or initial load.
+          items = newData;
+        } else {
+          // Pagination — append to existing items.
+          items.addAll(newData);
+        }
+        hasNextPage = newData.length >= widget.pageSize;
+        isLoading = false;
+        isLoadingMore = false;
+        errorMessage = null;
+      });
+    } else if (widget.isErrorState(state)) {
+      setState(() {
+        errorMessage = widget.extractErrorMessage(state);
+        isLoading = false;
+        isLoadingMore = false;
+      });
+    }
   }
 
   Widget _buildList() {
@@ -342,14 +344,7 @@ class _BlocPaginatedListViewState<T, B extends StateStreamable<S>, S>
     // Bottom loader.
     if (adjustedIndex >= items.length) {
       return widget.bottomLoaderWidget ??
-          Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Center(
-              child: Theme.of(context).platform == TargetPlatform.iOS
-                  ? const CupertinoActivityIndicator()
-                  : CircularProgressIndicator(color: _progressColor(context)),
-            ),
-          );
+          DefaultBottomLoader(color: _progressColor(context));
     }
 
     return widget.itemBuilder(context, items[adjustedIndex], adjustedIndex);
