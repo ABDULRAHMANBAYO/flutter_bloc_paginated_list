@@ -1,5 +1,6 @@
-import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:material_ui/material_ui.dart';
+
 import 'default_bottom_loader.dart';
 import 'typedefs.dart';
 
@@ -296,7 +297,8 @@ class _BlocPaginatedListViewState<T, B extends StateStreamable<S>, S>
   Widget _buildList() {
     final hasHeader = widget.headerBuilder != null;
     final headerOffset = hasHeader ? 1 : 0;
-    final itemCount = headerOffset +
+    final itemCount =
+        headerOffset +
         items.length +
         (isLoadingMore && widget.showBottomLoader ? 1 : 0);
 

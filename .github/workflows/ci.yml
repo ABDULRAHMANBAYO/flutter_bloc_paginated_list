@@ -1,0 +1,46 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  # Weekly run so new Flutter releases that break or deprecate something
+  # surface even when the package itself hasn't changed.
+  schedule:
+    - cron: "0 6 * * 1"
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Flutter ${{ matrix.channel }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        channel: [stable, beta]
+    # Beta is an early warning only; it shouldn't block merges.
+    continue-on-error: ${{ matrix.channel == 'beta' }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: ${{ matrix.channel }}
+          cache: true
+      - run: flutter --version
+      - run: flutter pub get
+      - run: dart format --output=none --set-exit-if-changed .
+      # --fatal-infos so deprecations (e.g. the material.dart -> material_ui
+      # move) fail the build instead of silently piling up.
+      - run: flutter analyze --fatal-infos
+      - run: flutter test
+      - name: Analyze example
+        working-directory: example
+        run: |
+          flutter pub get
+          flutter analyze --fatal-infos
+      - name: Test against lowest allowed dependency versions
+        run: |
+          flutter pub downgrade
+          flutter analyze --fatal-infos
+          flutter test
+      - run: dart pub publish --dry-run

@@ -22,13 +22,13 @@ Instead of requiring a specific state type, you pass small predicate/extractor c
   header, and bottom loader
 - 📜 Optional scrolling header, external `ScrollController`, `shrinkWrap`, custom physics
 - 🎨 Theme-aware defaults with an optional `progressIndicatorColor`
-- 🪶 No dependencies beyond `flutter_bloc`
+- 🪶 No dependencies beyond `flutter_bloc` and Flutter's own `material_ui` / `cupertino_ui` libraries
 
 ## Installation
 
 ```yaml
 dependencies:
-  flutter_bloc_paginated_list: ^0.1.0
+  flutter_bloc_paginated_list: ^0.2.0
 ```
 
 ## Usage
