@@ -1,7 +1,7 @@
-import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_bloc_paginated_list/flutter_bloc_paginated_list.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Minimal state model used by the tests.
 sealed class _State {
@@ -56,18 +56,15 @@ Widget _harness(_FakeCubit cubit, {int pageSize = 3}) {
             SizedBox(height: 100, child: Text('item $item')),
         loadingItemBuilder: (context, index) => const Text('skeleton'),
         emptyBuilder: (context) => const Text('empty'),
-        errorBuilder: (context, error, retry) => TextButton(
-          onPressed: retry,
-          child: Text('error: $error'),
-        ),
+        errorBuilder: (context, error, retry) =>
+            TextButton(onPressed: retry, child: Text('error: $error')),
       ),
     ),
   );
 }
 
 void main() {
-  testWidgets('renders the first page after the initial fetch',
-      (tester) async {
+  testWidgets('renders the first page after the initial fetch', (tester) async {
     final cubit = _FakeCubit({
       1: [1, 2, 3],
     });
@@ -79,8 +76,9 @@ void main() {
     expect(find.text('empty'), findsNothing);
   });
 
-  testWidgets('shows the empty builder when the first page is empty',
-      (tester) async {
+  testWidgets('shows the empty builder when the first page is empty', (
+    tester,
+  ) async {
     final cubit = _FakeCubit({1: <int>[]});
     await tester.pumpWidget(_harness(cubit));
     await tester.pumpAndSettle();
@@ -105,8 +103,9 @@ void main() {
     expect(find.text('item 1'), findsOneWidget);
   });
 
-  testWidgets('appends the next page when scrolled to the bottom',
-      (tester) async {
+  testWidgets('appends the next page when scrolled to the bottom', (
+    tester,
+  ) async {
     // Page 1 must overflow the viewport (each item is 100px tall) so there is
     // something to scroll before load-more can trigger.
     final cubit = _FakeCubit({

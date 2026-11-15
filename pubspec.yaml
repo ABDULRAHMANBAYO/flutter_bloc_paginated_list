@@ -2,7 +2,7 @@ name: flutter_bloc_paginated_list
 description: >-
   A state-shape-agnostic paginated ListView for Flutter driven by any BLoC or
   Cubit: infinite scroll, pull-to-refresh, and fully customizable builders.
-version: 0.1.0
+version: 0.2.0
 repository: https://github.com/ABDULRAHMANBAYO/flutter_bloc_paginated_list
 issue_tracker: https://github.com/ABDULRAHMANBAYO/flutter_bloc_paginated_list/issues
 
@@ -14,15 +14,19 @@ topics:
   - pull-to-refresh
 
 environment:
-  sdk: ">=3.0.0 <4.0.0"
-  flutter: ">=3.10.0"
+  # material_ui / cupertino_ui (the decoupled Material and Cupertino libraries)
+  # require Flutter 3.47 / Dart 3.13.
+  sdk: ^3.13.0
+  flutter: ">=3.47.0"
 
 dependencies:
+  cupertino_ui: ^1.1.6
   flutter:
     sdk: flutter
   # StateStreamable (used for the generic bloc bound) was introduced in
   # flutter_bloc 8.1.0, so that is the lowest supported version.
   flutter_bloc: ">=8.1.0 <10.0.0"
+  material_ui: ^1.11.0
 
 dev_dependencies:
   flutter_test:

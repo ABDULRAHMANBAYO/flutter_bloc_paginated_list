@@ -1,6 +1,6 @@
-import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_bloc_paginated_list/flutter_bloc_paginated_list.dart';
+import 'package:material_ui/material_ui.dart';
 
 void main() => runApp(const MyApp());
 
@@ -61,9 +61,7 @@ class ItemsCubit extends Cubit<ItemsState> {
       return;
     }
     final end = (start + limit).clamp(0, _total);
-    emit(ItemsLoaded([
-      for (var i = start; i < end; i++) 'Item #${i + 1}',
-    ]));
+    emit(ItemsLoaded([for (var i = start; i < end; i++) 'Item #${i + 1}']));
   }
 }
 
